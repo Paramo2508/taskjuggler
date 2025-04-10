@@ -19,7 +19,7 @@ project pSix "Web Game"  2024-12-15 +5m {
   # the project reports. If not specified, the current day will be
   # used, but this will likely be outside of the project range, so it
   # can't be seen in the reports.
-  now 2025-02-25-13:00
+  now 2025-04-10-13:00
   # The currency for all money values is the US Dollar.
   currency "EUR"
 
@@ -69,6 +69,13 @@ resource dev2 "Samantha Müller" {
 resource dev3 "Peter Green" {
   email "kkk@unizar.es"
 }
+# Nuevo recurso - me añado como miembro del equipo con dedicación de 4h diarias
+resource dev4 "Tu Nombre" {
+  email "tunombre@unizar.es"
+  # Dedicación limitada a 4 horas al día (medio tiempo)
+  limits { dailymax 4h }
+  rate 120
+}
 
 # Now we specify the work packages. The whole project is described as
 # a task that contains subtasks. These subtasks are then broken down
@@ -89,6 +96,8 @@ task WMGame "Web & Mobile Game" {
   task tgdesign "General System Design" {
       effort 2d
       allocate boss
+      # Me asigno también a esta tarea
+      allocate dev4
       depends WMGame.deliveries.start
   }
 
@@ -102,6 +111,8 @@ task WMGame "Web & Mobile Game" {
       # The effort to finish this task is 5 man-days.
       effort 5d
       allocate dev1
+      # Me asigno a esta tarea de diseño
+      allocate dev4
     }
     task tlogic "Game logic" {
       effort 12d
@@ -139,6 +150,8 @@ task WMGame "Web & Mobile Game" {
     task tFEc "Web Front End Construction" {
       effort 15d
       allocate dev2, dev3
+      # Me asigno a esta tarea
+      allocate dev4
       depends WMGame.twebF.tGUId
     }
     task tFEt "Web Front End Test" {
@@ -158,6 +171,8 @@ task WMGame "Web & Mobile Game" {
     task tmGUId "Mobile GUI Design" {
       effort 10d
       allocate dev3
+      # Me asigno a esta tarea de diseño móvil
+      allocate dev4
       depends WMGame.twebF.tGUId
       # La GUI móvil se inicia después del diseño web para mantener coherencia
     }
@@ -166,6 +181,11 @@ task WMGame "Web & Mobile Game" {
       effort 3d
       allocate boss, dev3
       # Esta tarea se puede realizar en paralelo con el diseño de la GUI
+      journalentry 2025-04-10 "Evaluación detallada de frameworks" {
+        author dev4
+        alert yellow
+        summary "Es necesario realizar una evaluación más detallada de React Native vs Flutter para tomar la decisión correcta. He preparado un documento comparativo que deberíamos revisar antes de la reunión del viernes."
+      }
     }
     
     task tMFEc "Mobile Front End Construction" {
@@ -184,6 +204,8 @@ task WMGame "Web & Mobile Game" {
     task tAppStore "App Store Preparation" {
       effort 5d
       allocate dev3
+      # Me asigno a esta tarea
+      allocate dev4
       depends WMGame.tmobileF.tMFEt
     }
   }
@@ -204,6 +226,8 @@ task WMGame "Web & Mobile Game" {
     task tCloudArchitecture "Cloud Architecture Design" {
       effort 5d
       allocate dev1
+      # Me asigno a esta tarea de arquitectura
+      allocate dev4
       depends WMGame.tcloud.tCloudResearch
     }
     
@@ -231,7 +255,11 @@ task WMGame "Web & Mobile Game" {
       effort 10d
       allocate boss
       allocate dev2
+      # Me asigno a las pruebas de aceptación
+      allocate dev4
       actual:effort 20d
+      # Fijamos como fecha mínima de inicio el 15 de mayo
+      start 2025-05-15
       # Modificación de dependencias para que las pruebas de aceptación
       # se realicen después de tener una versión entregable
       depends WMGame.twebF.tFEt
@@ -336,6 +364,13 @@ textreport frame "" {
     title "Resource Graph"
     center '<[report id="resourceGraph"]>'
   }
+  
+  # Nuevo informe para mostrar la planificación inicial
+  textreport "InitialPlan" {
+    formats html
+    title "Initial Project Plan"
+    center '<[report id="initialPlanReport"]>'
+  }
 }
 
 # A traditional Gantt chart with a project overview.
@@ -354,6 +389,19 @@ taskreport overview "" {
   caption 'All effort values are in man days.'
 }
 
+# Informe adicional para mostrar la planificación inicial
+taskreport initialPlanReport "" {
+  scenarios plan
+  headline "Initial Project Plan"
+  columns bsi { title 'WBS' },
+          name, start, end, effort, cost,
+          revenue, chart { ${TaskTip} }
+  timeformat "%a %Y-%m-%d"
+  loadunit days
+  hideresource @all
+  balance cost rev
+  caption 'Initial plan effort values are in man days.'
+}
 
 # Macro to set the background color of a cell according to the alert
 # level of the task.
