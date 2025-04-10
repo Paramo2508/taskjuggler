@@ -47,6 +47,7 @@ account cost "Project Cost" {
   account wFront "Web Front-End"
   account mFront "Mobile Front-end"
   account back "Back-End"
+  account cloud "Cloud Deployment"
 }
 account rev "Payments"
 # The Profit&Loss analysis should be rev - cost accounts.
@@ -92,7 +93,7 @@ task WMGame "Web & Mobile Game" {
   }
 
   task tback "Back End" {
-    # It is necessary to “purge” the “chargeset” because it has been assigned previously to other variable 
+    # It is necessary to "purge" the "chargeset" because it has been assigned previously to other variable 
     purge chargeset
     chargeset back
     responsible dev1
@@ -147,14 +148,96 @@ task WMGame "Web & Mobile Game" {
     }    
   }
 
+  # Nueva tarea para el front-end móvil
+  task tmobileF "Mobile Front End" {
+    purge chargeset
+    chargeset mFront
+    responsible dev3
+    depends WMGame.tback.tBEd
+    
+    task tmGUId "Mobile GUI Design" {
+      effort 10d
+      allocate dev3
+      depends WMGame.twebF.tGUId
+      # La GUI móvil se inicia después del diseño web para mantener coherencia
+    }
+    
+    task tplatformSelection "Mobile Platform Selection" {
+      effort 3d
+      allocate boss, dev3
+      # Esta tarea se puede realizar en paralelo con el diseño de la GUI
+    }
+    
+    task tMFEc "Mobile Front End Construction" {
+      effort 18d
+      allocate dev2, dev3
+      depends WMGame.tmobileF.tmGUId
+      depends WMGame.tmobileF.tplatformSelection
+    }
+    
+    task tMFEt "Mobile Front End Test" {
+      effort 8d
+      allocate dev1, dev3
+      depends WMGame.tmobileF.tMFEc
+    }
+    
+    task tAppStore "App Store Preparation" {
+      effort 5d
+      allocate dev3
+      depends WMGame.tmobileF.tMFEt
+    }
+  }
+
+  # Nueva tarea para el despliegue en la nube
+  task tcloud "Cloud Deployment" {
+    purge chargeset
+    chargeset cloud
+    responsible dev1
+    depends WMGame.tback.tBEd
+    
+    task tCloudResearch "Cloud Provider Research & Selection" {
+      effort 7d
+      allocate dev1, boss
+      # La investigación puede comenzar después del diseño del back-end
+    }
+    
+    task tCloudArchitecture "Cloud Architecture Design" {
+      effort 5d
+      allocate dev1
+      depends WMGame.tcloud.tCloudResearch
+    }
+    
+    task tDevOps "DevOps Pipeline Setup" {
+      effort 8d
+      allocate dev1, dev2
+      depends WMGame.tcloud.tCloudArchitecture
+    }
+    
+    task tDeployment "Initial Deployment" {
+      effort 6d
+      allocate dev1
+      depends WMGame.tcloud.tDevOps
+      depends WMGame.tback.tbackDev
+    }
+    
+    task tPerformanceTesting "Cloud Performance Testing" {
+      effort 4d
+      allocate dev1, dev2
+      depends WMGame.tcloud.tDeployment
+    }
+  }
+
   task ttest "Acceptance tests" {
       effort 10d
       allocate boss
       allocate dev2
       actual:effort 20d
-      depends WMGame.twebF
-      depends WMGame.tback
-      }
+      # Modificación de dependencias para que las pruebas de aceptación
+      # se realicen después de tener una versión entregable
+      depends WMGame.twebF.tFEt
+      depends WMGame.tmobileF.tMFEt
+      depends WMGame.tcloud.tPerformanceTesting
+  }
 
     
   task deliveries "Milestones" {
@@ -179,6 +262,7 @@ task WMGame "Web & Mobile Game" {
 
     task done "Ship Product to Customer" {
       depends WMGame.ttest
+      depends WMGame.tmobileF.tAppStore
       charge 12000.0 onstart
     }
   }
@@ -209,7 +293,7 @@ macro TaskTip [
     '''Followers: '''
 
     <-query attribute='followers'->
-    ->8-
+  ->8-
 ]
 
 textreport frame "" {
